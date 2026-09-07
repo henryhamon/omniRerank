@@ -1,0 +1,82 @@
+stories:
+  - id: 1-1
+    title: Base + Cohere + SQL entry point
+    epic: 1
+    status: done
+    description: Ship the abstract Base (Template Method, virtual Execute), the Cohere v2 /rerank adapter, and the Engine.Rerank [SqlProc] entry point that loads config from %Embedding.Config.Configuration.rerank and resolves credentials via Ens.Config.Credentials by name.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-bootstrap-cohere.md
+
+  - id: 2-1
+    title: Retry with exponential backoff on Base
+    epic: 2
+    status: done
+    description: Add RetryWithBackoff to Base — retry on 429 and 5xx, fast-fail other 4xx, honor Retry-After. Default maxAttempts=3, baseDelayMs=500, maxDelayMs=8000; all overridable at rerank.retry.*.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-resilience.md
+
+  - id: 2-2
+    title: Circuit breaker on Engine
+    epic: 2
+    status: done
+    description: Add persistent circuit breaker at ^omniReRank.Breaker(provider|modelName) with FAILURETHRESHOLD=5 and COOLDOWNSECONDS=60. Engine checks before dispatch, records success/failure after.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-resilience.md
+
+  - id: 2-3
+    title: Transport mock — PostOnce seam + MockHttpProvider
+    epic: 2
+    status: done
+    description: Introduce the Base.PostOnce injection seam and the MockHttpProvider test class that pops synthetic (status, headers, body) triples from ^||omniReRankMockPostQueue, so every branch of Base.Execute can be tested without a real network.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-resilience.md
+
+  - id: 3-1
+    title: Voyage provider
+    epic: 3
+    status: pending
+    description: Ship dc.omniReRank.provider.Voyage as a subclass of Base with the five hooks — Voyage AI /v1/rerank contract, Bearer auth by credential name, {query, documents, model, top_k} payload, data[] response parsing.
+
+  - id: 3-2
+    title: Jina provider
+    epic: 3
+    status: pending
+    description: Ship dc.omniReRank.provider.Jina as a subclass of Base with the five hooks — Jina /v1/rerank contract, Bearer auth by credential name, {model, query, documents, top_n} payload, results[] response parsing.
+
+  - id: 3-3
+    title: Ollama provider (authless / local)
+    epic: 3
+    status: pending
+    description: Ship dc.omniReRank.provider.Ollama as a subclass of Base — no-op SetAuth, apiBase-driven URL, ValidateConfig requires apiBase but not apiKey. Proves the authless / local-endpoint path.
+
+  - id: 4-1
+    title: Fallback list in config + one-provider-at-a-time execution
+    epic: 4
+    status: pending
+    description: Engine reads rerank.fallbacks array; on primary throw after retries (or primary breaker open), tries each fallback in order via its own %Embedding.Config row. Only one Provider produces the returned RerankResult — never blends scores across providers (AD-9).
+
+  - id: 4-2
+    title: Provider-compatibility contract for fallbacks
+    epic: 4
+    status: pending
+    description: Engine.AssertProviderCompatible rejects fallbacks whose provider|modelName differs from the primary — before any HTTP. Prevents silent score-space mixing.
+
+  - id: 5-1
+    title: Worked example — vector search + rerank stored procedure
+    epic: 5
+    status: pending
+    description: Ship a demo Catalog table with embeddings, a seed script, and a Search %SqlProc that vector-searches top-K then joins against Engine_Rerank to reorder. Demonstrates the end-to-end flow in one CALL.
+
+  - id: 5-2
+    title: Per-provider README pages
+    epic: 5
+    status: pending
+    description: One docs/providers/<name>.md per shipped Provider with config keys, a full working JSON example, two model examples, and one gotcha section. Every JSON sample validates against the Provider's ValidateConfig in CI.
+
+  - id: 5-3
+    title: CI grep for credential leaks (SM-2 evidence)
+    epic: 5
+    status: pending
+    description: TestCredentialSafety.cls injects a sentinel-string password, triggers every throw path across every Provider and the Engine, asserts the sentinel appears in NO %Status message. GitHub Actions runs it on every push.
+
+  - id: 5-4
+    title: Open Exchange release cut
+    epic: 5
+    status: pending
+    description: Bump module.xml to 1.0.0, resolve PRD §8 Q4 (name casing) in code and README, ship CHANGELOG.md, prepare Open Exchange listing draft.
