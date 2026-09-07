@@ -1,0 +1,34 @@
+# iris-agentic-dev workspace configuration
+# Commit this file to share connection settings with your team.
+
+# ── Native IRIS (no Docker) — Windows IIS or Linux Apache ──────────────────
+# For IRIS installed directly on the host (not in Docker), uncomment and set:
+# host = "localhost"
+# web_port = 80       # IIS default (IRIS 2024.1+); use 52773 for pre-2024.1 Private Web Server
+# web_prefix = ""     # URL path prefix, e.g. "iris" when Atelier is at /iris/api/atelier/
+# namespace = "USER"
+# scheme = "http"     # Use "https" for TLS-protected IRIS web gateways
+
+# ── Docker container ────────────────────────────────────────────────────────
+# For IRIS running in Docker, uncomment and set container name:
+# NOTE: iris-agentic-dev requires the IRIS Atelier REST API. Three supported configurations:
+#   1. Community images (iris-community, irishealth-community) — include private web server on port 52773
+#   2. Enterprise + ISC Web Gateway container (intersystems/webgateway) — iris-agentic-dev auto-detects it
+#   3. Enterprise standalone (intersystems/iris) — NOT supported, no Atelier REST available
+#
+# container = "omnirerank-iris-1"
+
+# Default IRIS namespace
+namespace = "IRISAPP"
+
+# Credentials (optional)
+# Use IRIS_USERNAME / IRIS_PASSWORD env vars instead of committing credentials.
+# username = "_SYSTEM"
+# password = "..."  # not recommended in committed files
+
+# ── Tool filtering (optional) ────────────────────────────────────────────────
+# Remove tools you don't use from the MCP tool list to reduce noise.
+# disabled_tools = ["iris_source_control", "iris_admin", "iris_credential_manage"]
+# Or go the other way: expose ONLY a named subset, regardless of toolset.
+# disabled_tools always wins for a name in both lists.
+# enabled_tools = ["iris_query", "iris_search", "iris_symbols"]
