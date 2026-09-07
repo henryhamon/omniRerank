@@ -3,7 +3,7 @@
   <Document name="dc-omniReRank.ZPM">
     <Module>
       <Name>dc-omniReRank</Name>
-      <Version>0.0.3</Version>
+      <Version>0.0.4</Version>
       <Description>dc.omniReRank — SQL-callable rerank gateway for InterSystems IRIS (Cohere provider)</Description>
       <Packaging>module</Packaging>
       <SourcesRoot>src</SourcesRoot>
