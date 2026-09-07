@@ -190,14 +190,15 @@ Method TestEngineEmptyQuery()
 Method TestEngineUnknownProvider()
 {
     Do ..DeleteConfig(..#TESTCONFIG)
-    Do ..MakeConfig(..#TESTCONFIG, "{""rerank"":{""provider"":""voyage"",""modelName"":""x"",""apiKey"":""y""}}")
+    Do ..MakeConfig(..#TESTCONFIG, "{""rerank"":{""provider"":""rerankly"",""modelName"":""x"",""apiKey"":""y""}}")
     Set threw = 0, msg = ""
     Try { Do ##class(dc.omniReRank.Engine).Rerank("q", "[""a""]", ..#TESTCONFIG) }
     Catch ex { Set threw = 1, msg = ex.DisplayString() }
     Do ..DeleteConfig(..#TESTCONFIG)
     Do $$$AssertTrue(threw, "throws on unknown provider")
-    Do $$$AssertTrue($Find(msg, "voyage") > 0, "error names the bad provider")
-    Do $$$AssertTrue($Find(msg, "cohere") > 0, "error lists valid providers")
+    Do $$$AssertTrue($Find(msg, "rerankly") > 0, "error names the bad provider")
+    Do $$$AssertTrue($Find(msg, "cohere") > 0, "error lists cohere in valid providers")
+    Do $$$AssertTrue($Find(msg, "voyage") > 0, "error lists voyage in valid providers")
 }
 
 Method TestEngineMissingCredential()

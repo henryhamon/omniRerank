@@ -30,8 +30,9 @@ stories:
   - id: 3-1
     title: Voyage provider
     epic: 3
-    status: pending
+    status: done
     description: Ship dc.omniReRank.provider.Voyage as a subclass of Base with the five hooks — Voyage AI /v1/rerank contract, Bearer auth by credential name, {query, documents, model, top_k} payload, data[] response parsing.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-voyage-provider.md
 
   - id: 3-2
     title: Jina provider
