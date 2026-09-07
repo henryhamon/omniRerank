@@ -37,8 +37,9 @@ stories:
   - id: 3-2
     title: Jina provider
     epic: 3
-    status: pending
+    status: done
     description: Ship dc.omniReRank.provider.Jina as a subclass of Base with the five hooks — Jina /v1/rerank contract, Bearer auth by credential name, {model, query, documents, top_n} payload, results[] response parsing.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-jina-provider.md
 
   - id: 3-3
     title: Ollama provider (authless / local)

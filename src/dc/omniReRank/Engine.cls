@@ -133,7 +133,7 @@ ClassMethod ResolveProvider(rerankCfg As %DynamicObject) As %String
 {
     Set provider = $ZConvert(rerankCfg.%Get("provider"), "L")
     If provider = "" {
-        $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.omniReRank.Engine.ResolveProvider: 'provider' is required in the rerank sub-block. Valid: cohere, voyage"))
+        $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.omniReRank.Engine.ResolveProvider: 'provider' is required in the rerank sub-block. Valid: cohere, voyage, jina"))
     }
     // Test hook: process-private override wins over the built-in map.
     // Mirrors ^||omniReRankCredential — used by unit tests to inject a mock
@@ -142,7 +142,8 @@ ClassMethod ResolveProvider(rerankCfg As %DynamicObject) As %String
     If testClass '= "" { Return testClass }
     If provider = "cohere" { Return "dc.omniReRank.provider.Cohere" }
     If provider = "voyage" { Return "dc.omniReRank.provider.Voyage" }
-    $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.omniReRank.Engine.ResolveProvider: unknown provider '"_rerankCfg.%Get("provider")_"'. Valid: cohere, voyage"))
+    If provider = "jina" { Return "dc.omniReRank.provider.Jina" }
+    $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.omniReRank.Engine.ResolveProvider: unknown provider '"_rerankCfg.%Get("provider")_"'. Valid: cohere, voyage, jina"))
 }
 
 /// Generates the circuit breaker key: "provider|modelName".
