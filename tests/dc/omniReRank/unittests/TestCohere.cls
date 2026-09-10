@@ -200,6 +200,7 @@ Method TestEngineUnknownProvider()
     Do $$$AssertTrue($Find(msg, "cohere") > 0, "error lists cohere in valid providers")
     Do $$$AssertTrue($Find(msg, "voyage") > 0, "error lists voyage in valid providers")
     Do $$$AssertTrue($Find(msg, "jina") > 0, "error lists jina in valid providers")
+    Do $$$AssertTrue($Find(msg, "ollama") > 0, "error lists ollama in valid providers")
 }
 
 Method TestEngineMissingCredential()

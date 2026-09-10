@@ -39,7 +39,7 @@ ClassMethod BuildPayload(query As %String, candidates As %DynamicArray, config A
 /// Extracts body.data[] -> %DynamicArray of {"index","score"} objects,
 /// preserving Voyage's own ordering. Throws with body content on any missing
 /// field.
-ClassMethod ParseResponse(body As %DynamicObject) As %DynamicArray
+ClassMethod ParseResponse(body As %DynamicObject, candidateCount As %Integer = 0) As %DynamicArray
 {
     Set data = body.%Get("data")
     If '$IsObject(data) {

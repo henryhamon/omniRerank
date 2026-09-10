@@ -42,10 +42,11 @@ stories:
     shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-jina-provider.md
 
   - id: 3-3
-    title: Ollama provider (authless / local)
+    title: Ollama provider (authless / local, LLM-as-judge shim)
     epic: 3
-    status: pending
-    description: Ship dc.omniReRank.provider.Ollama as a subclass of Base — no-op SetAuth, apiBase-driven URL, ValidateConfig requires apiBase but not apiKey. Proves the authless / local-endpoint path.
+    status: done
+    description: Ship dc.omniReRank.provider.Ollama as a subclass of Base — no-op SetAuth, apiBase-driven URL, ValidateConfig requires apiBase but not apiKey. Ollama has no native /api/rerank (confirmed 2026-09-10) so this Provider is an LLM-as-judge shim over /api/chat with format:"json" and a baked-in schema-strict system prompt. Optional rerank.promptTemplate + rerank.chatOptions escape hatches.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-ollama-provider.md
 
   - id: 4-1
     title: Fallback list in config + one-provider-at-a-time execution

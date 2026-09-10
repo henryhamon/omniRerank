@@ -45,7 +45,7 @@ ClassMethod Execute(query As %String, candidates As %DynamicArray, config As %Dy
     Set response = ..RetryWithBackoff(request, url, config)
 
     Set body = {}.%FromJSON(response.Data)
-    Return ..ParseResponse(body)
+    Return ..ParseResponse(body, candidates.%Size())
 }
 
 /// Executes the HTTP POST with retry / exponential backoff.
@@ -164,7 +164,7 @@ ClassMethod BuildPayload(query As %String, candidates As %DynamicArray, config A
 /// Parses the HTTP response body and returns a %DynamicArray of
 /// `{"index": <origIndex>, "score": <relevanceScore>}` objects.
 /// MUST throw — never return an empty array on failure.
-ClassMethod ParseResponse(body As %DynamicObject) As %DynamicArray [ Abstract ]
+ClassMethod ParseResponse(body As %DynamicObject, candidateCount As %Integer = 0) As %DynamicArray [ Abstract ]
 {
 }
 

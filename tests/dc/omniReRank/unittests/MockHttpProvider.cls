@@ -75,7 +75,7 @@ ClassMethod BuildPayload(query As %String, candidates As %DynamicArray, config A
 }
 
 /// Matches Cohere's {results:[{index,relevance_score},...]} shape.
-ClassMethod ParseResponse(body As %DynamicObject) As %DynamicArray
+ClassMethod ParseResponse(body As %DynamicObject, candidateCount As %Integer = 0) As %DynamicArray
 {
     Set results = body.%Get("results")
     If '$IsObject(results) {

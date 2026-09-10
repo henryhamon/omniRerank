@@ -39,7 +39,7 @@ ClassMethod BuildPayload(query As %String, candidates As %DynamicArray, config A
 /// Extracts body.results[] -> %DynamicArray of {"index","score"} objects,
 /// preserving Cohere's own ordering. Throws with body content on any missing
 /// field.
-ClassMethod ParseResponse(body As %DynamicObject) As %DynamicArray
+ClassMethod ParseResponse(body As %DynamicObject, candidateCount As %Integer = 0) As %DynamicArray
 {
     Set results = body.%Get("results")
     If '$IsObject(results) {
