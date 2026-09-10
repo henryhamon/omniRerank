@@ -61,10 +61,11 @@ stories:
     description: Engine.AssertProviderCompatible rejects fallbacks whose provider|modelName differs from the primary — before any HTTP. Prevents silent score-space mixing.
 
   - id: 5-1
-    title: Worked example — vector search + rerank stored procedure
+    title: Worked example — vector search + rerank stored procedure (native %Embedding, no dc.omniEmbedding dependency)
     epic: 5
-    status: pending
-    description: Ship a demo Catalog table with embeddings, a seed script, and a Search %SqlProc that vector-searches top-K then joins against Engine_Rerank to reorder. Demonstrates the end-to-end flow in one CALL.
+    status: done
+    description: Ship a demo Catalog table with %Embedding-computed vectors, a Seed classmethod, and Search %SqlProc that vector-searches top-K then reranks. Uses IRIS 2026 native %Embedding.Interface, not dc.omniEmbedding — preserves the architectural independence principle. Two follow-up findings surfaced during implementation (FR-1 CALL-from-SQL surface behavior; HNSW fixed-length constraint) — candidates for tiny follow-up specs.
+    shipped_spec: _bmad-output/implementation-artifacts/spec-omnirerank-demo-search.md
 
   - id: 5-2
     title: Per-provider README pages

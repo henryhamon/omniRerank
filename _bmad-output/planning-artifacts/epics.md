@@ -222,10 +222,10 @@ Epic 1 ──▶ Epic 2 ──▶ Epic 3 ──▶ Epic 5
 
 - **As** an IRIS developer evaluating the library, **I want** a small demo — a table, some seeded rows, and a stored procedure that vector-searches then reranks — **so I can see the end-to-end flow without reading the source.**
 - **Acceptance:**
-  1. `src/dc/omniReRank/demo/Catalog.cls` — `%Persistent` with `Id`, `Title`, `Description`, `Embedding %Vector(...)`.
-  2. `src/dc/omniReRank/demo/Seed.cls` — classmethod that seeds ~20 rows across a couple of topics; embeddings computed via `dc.omniEmbedding` if reachable, otherwise pre-shipped fixture vectors.
-  3. `src/dc/omniReRank/demo/Search.cls:Search(query, k)` — `%SqlProc` that: (a) does a `VECTOR_COSINE`-ordered top-K search on `Catalog`, (b) joins the top-K against `CALL dc_omniReRank.Engine_Rerank(:query, :candidatesJson, 'CatalogSearchV1')`, (c) returns `(Id, Title, cosineScore, rerankScore)` in rerank order.
-  4. `iris-agentic-dev exec 'do ##class(dc.omniReRank.demo.Seed).Run() zw ##class(dc.omniReRank.demo.Search).Search("best iris tutorials", 5)'` → returns 5 rows with monotonically decreasing `rerankScore`.
+  1. `src/dc/sample/omniReRank/demo/Catalog.cls` — `%Persistent` with `Id`, `Title`, `Description`, `Embedding %Vector(...)`.
+  2. `src/dc/sample/omniReRank/demo/Seed.cls` — classmethod that seeds ~20 rows across a couple of topics; embeddings computed via `dc.omniEmbedding` if reachable, otherwise pre-shipped fixture vectors.
+  3. `src/dc/sample/omniReRank/demo/Search.cls:Search(query, k)` — `%SqlProc` that: (a) does a `VECTOR_COSINE`-ordered top-K search on `Catalog`, (b) joins the top-K against `CALL dc_omniReRank.Engine_Rerank(:query, :candidatesJson, 'CatalogSearchV1')`, (c) returns `(Id, Title, cosineScore, rerankScore)` in rerank order.
+  4. `iris-agentic-dev exec 'do ##class(dc.sample.omniReRank.demo.Seed).Run() zw ##class(dc.sample.omniReRank.demo.Search).Search("best iris tutorials", 5)'` → returns 5 rows with monotonically decreasing `rerankScore`.
   5. `README.md` §"Demo" walks through the four steps a fresh clone needs (docker up, load module, seed, call).
 - **Governed by:** AD-2, AD-3, AD-8.
 - **Depends on:** Epic 1 only. Can ship before Epic 3 completes.
