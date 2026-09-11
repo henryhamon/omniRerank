@@ -4,7 +4,7 @@
     <Module>
       <Name>dc-omniReRank</Name>
       <Version>1.0.1</Version>
-      <Description>dc.omniReRank — SQL-callable rerank gateway for InterSystems IRIS</Description>
+      <Description>dc.omniReRank - SQL-callable rerank gateway for InterSystems IRIS (Cohere, Voyage, Jina, Ollama)</Description>
       <Packaging>module</Packaging>
       <SourcesRoot>src</SourcesRoot>
       <Resource Name="dc.omniReRank.PKG"/>
