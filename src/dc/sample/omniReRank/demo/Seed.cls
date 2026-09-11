@@ -18,24 +18,31 @@ ClassMethod Run() As %Status
     If '##class(%Embedding.Config).%ExistsId(..#EMBCONFIG) {
         $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Seed.Run: %Embedding.Config '"_..#EMBCONFIG_"' not found — create it before seeding (see README §Demo)."))
     }
-    Set cfg = ##class(%Embedding.Config).%OpenId(..#EMBCONFIG, , .openSc)
-    If '$IsObject(cfg) {
-        $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Seed.Run: could not open %Embedding.Config '"_..#EMBCONFIG_"'."))
-    }
-    Set embCfgJson = cfg.Configuration
-
     // Wipe and re-seed.
     Do ##class(dc.sample.omniReRank.demo.Catalog).%KillExtent()
+
+    // %Embedding.Interface.Embedding is abstract — dispatch through IRIS 2026's
+    // SQL EMBEDDING() function, which reads EmbeddingClass off the named
+    // %Embedding.Config row and calls the concrete provider's implementation.
+    Set embStmt = ##class(%SQL.Statement).%New()
+    Set sc = embStmt.%Prepare("SELECT EMBEDDING(?, ?) AS Vec")
+    If $$$ISERR(sc) {
+        $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Seed.Run: could not prepare EMBEDDING() statement: "_$System.Status.GetErrorText(sc)))
+    }
 
     Set rows = ..Corpus()
     Set iter = rows.%GetIterator()
     While iter.%GetNext(.k, .row) {
         Set doc = ##class(dc.sample.omniReRank.demo.Catalog).%New()
-        Set doc.Id = +row.%Get("id")
         Set doc.Title = row.%Get("title")
         Set doc.Description = row.%Get("description")
         Set doc.Topic = row.%Get("topic")
-        Set doc.Embedding = ##class(%Embedding.Interface).Embedding(doc.Description, embCfgJson)
+        Set embRs = embStmt.%Execute(doc.Description, ..#EMBCONFIG)
+        If embRs.%SQLCODE '= 0 {
+            $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Seed.Run: EMBEDDING() failed for '"_doc.Title_"' via config '"_..#EMBCONFIG_"': SQLCODE "_embRs.%SQLCODE_" "_embRs.%Message))
+        }
+        Do embRs.%Next()
+        Set doc.Embedding = embRs.%Get("Vec")
         Set sc = doc.%Save()
         If $$$ISERR(sc) {
             $$$ThrowStatus(sc)

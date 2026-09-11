@@ -43,15 +43,22 @@ ClassMethod Search(query As %String, k As %Integer = 10) As dc.sample.omniReRank
         Return emptyOut
     }
 
-    // Embed the query using CatalogEmbeddingV1.
+    // Embed the query using CatalogEmbeddingV1 — dispatch through IRIS 2026's
+    // SQL EMBEDDING() function (%Embedding.Interface.Embedding is abstract and
+    // not directly callable; EMBEDDING() reads EmbeddingClass off the named
+    // config row and calls the concrete provider).
     If '##class(%Embedding.Config).%ExistsId(..#EMBCONFIG) {
         $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Search.Search: %Embedding.Config '"_..#EMBCONFIG_"' not found — create it before searching (see README section Demo)."))
     }
-    Set embCfg = ##class(%Embedding.Config).%OpenId(..#EMBCONFIG, , .openSc)
-    If '$IsObject(embCfg) {
-        $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Search.Search: could not open %Embedding.Config '"_..#EMBCONFIG_"'."))
+    Set embStmt = ##class(%SQL.Statement).%New()
+    Set sc = embStmt.%Prepare("SELECT EMBEDDING(?, ?) AS Vec")
+    If $$$ISERR(sc) { $$$ThrowStatus(sc) }
+    Set embRs = embStmt.%Execute(query, ..#EMBCONFIG)
+    If embRs.%SQLCODE '= 0 {
+        $$$ThrowStatus($$$ERROR($$$GeneralError, "dc.sample.omniReRank.demo.Search.Search: EMBEDDING() failed for query via config '"_..#EMBCONFIG_"': SQLCODE "_embRs.%SQLCODE_" "_embRs.%Message))
     }
-    Set queryVec = ##class(%Embedding.Interface).Embedding(query, embCfg.Configuration)
+    Do embRs.%Next()
+    Set queryVec = embRs.%Get("Vec")
 
     // Cosine top-K query — materialize hits + candidate descriptions.
     Set stmt = ##class(%SQL.Statement).%New()

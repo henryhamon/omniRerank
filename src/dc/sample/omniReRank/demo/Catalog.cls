@@ -7,8 +7,6 @@
 Class dc.sample.omniReRank.demo.Catalog Extends %Persistent
 {
 
-Property Id As %Integer(MINVAL = 1) [ Required ];
-
 Property Title As %String(MAXLEN = "");
 
 Property Description As %String(MAXLEN = "");
@@ -21,8 +19,6 @@ Property Topic As %String(MAXLEN = 32);
 /// wires up a different-length model, drop the EmbeddingIdx index and
 /// widen this length.
 Property Embedding As %Vector(DATATYPE = "FLOAT", LEN = 1536);
-
-Index IdIdx On Id [ IdKey ];
 
 Index EmbeddingIdx On (Embedding) As %SQL.Index.HNSW(Distance = "Cosine", M = 16, efConstruction = 64);
 

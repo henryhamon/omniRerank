@@ -26,6 +26,19 @@ Method SetRows(rows As %DynamicArray)
     Set ..Pos = 0
 }
 
+/// %Display / %Print / other consumers of %SQL.IResultSet call %OpenCursor
+/// once before iterating. We just reset the row pointer so re-display works.
+Method %OpenCursor() As %Status
+{
+    Set ..Pos = 0
+    Return $$$OK
+}
+
+Method %CloseCursor() As %Status
+{
+    Return $$$OK
+}
+
 Method %Next(ByRef sc As %Status = {$$$OK}) As %Integer
 {
     Set sc = $$$OK
