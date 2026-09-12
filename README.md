@@ -136,35 +136,38 @@ The IPM module `dc-omniReRank` is loaded automatically into the `IRISAPP` namesp
 zpm "install dc-omniReRank"
 ```
 
-### 4. **Wire it into `%Embedding.Config`**
+### 4. **Create an SSL configuration** (required for every SaaS provider)
 
-Rerank configuration lives as a `rerank` sub-block inside the `Configuration` JSON of an existing `%Embedding.Config` row. Any embedding config can be extended in place:
+Every SaaS reranker (Cohere, Voyage, Jina) and every SaaS embedding provider (OpenAI, etc.) speaks HTTPS. IRIS refuses outbound HTTPS without a named `Security.SSLConfigs` entry. Create one once, in the `%SYS` namespace:
+
+```objectscript
+zn "%SYS"
+Do ##class(Security.SSLConfigs).Create("OmniHTTPS")
+zn "IRISAPP"
+```
+
+You can pick any name — this README uses `OmniHTTPS`. Skip this step only if you use Ollama (local, authless, HTTP).
+
+### 5. **Wire it into `%Embedding.Config`**
+
+Rerank configuration lives as a `rerank` sub-block inside the `Configuration` JSON of an existing `%Embedding.Config` row. Any embedding config can be extended in place. `sslConfig` must appear at the top level (for the embedding provider) **and** inside the `rerank` sub-block (for the reranker) whenever both talk HTTPS:
 
 ```sql
-INSERT INTO %Embedding.Config (Name, Configuration, EmbeddingClass, VectorLength, VectorDataType, Description)
+INSERT INTO %Embedding.Config (Name, Configuration, EmbeddingClass, VectorLength, Description)
 VALUES (
     'ProductSearchV3',
-    '{"apiKey":"openai-prod","modelName":"text-embedding-3-small","rerank":{"provider":"cohere","modelName":"rerank-v3.5","apiKey":"cohere-prod"}}',
+    '{"apiKey":"openai-prod","modelName":"text-embedding-3-small","sslConfig":"OmniHTTPS","rerank":{"provider":"cohere","modelName":"rerank-v3.5","apiKey":"cohere-prod","sslConfig":"OmniHTTPS"}}',
     '%Embedding.OpenAI',
     1536,
-    'FLOAT',
     'Product search: OpenAI embeddings + Cohere rerank'
 )
 ```
 
-### 5. **Use It**
+Note: `%Embedding.Config` schema varies across IRIS 2026 builds. The columns above (`Name, Configuration, EmbeddingClass, VectorLength, Description`) are the portable minimum. Some builds also expose `VectorDataType`; set it via property assignment if your build requires it.
 
-From SQL:
+### 6. **Use It**
 
-```sql
-CALL dc_omniReRank.Engine_Rerank(
-    'best iris tutorials',
-    '["Getting started with IRIS SQL","Deploying IRIS with Docker","Advanced ObjectScript tips"]',
-    'ProductSearchV3'
-)
-```
-
-From ObjectScript:
+`Engine.Rerank` is registered as `[SqlProc]`, but the primary consumption path is ObjectScript (the current build's SQL result-set marshaller does not surface custom `%SQL.CustomResultSet` columns to callers of `CALL ...`). Invoke it as a classmethod and iterate:
 
 ```objectscript
 Set rs = ##class(dc.omniReRank.Engine).Rerank(
@@ -172,9 +175,7 @@ Set rs = ##class(dc.omniReRank.Engine).Rerank(
     "[""Getting started with IRIS SQL"",""Deploying IRIS with Docker"",""Advanced ObjectScript tips""]",
     "ProductSearchV3"
 )
-While rs.%Next() {
-    Write !, rs.originalIndex, " → ", rs.candidate, " (", rs.score, ")"
-}
+Do rs.%Display()   // or iterate with rs.%Next() and read rs.originalIndex, rs.candidate, rs.score
 ```
 
 ---
@@ -192,7 +193,7 @@ Every field lives under the `rerank` sub-object of `%Embedding.Config.Configurat
 | `apiKey` | required for SaaS providers; ignored for `ollama` | **Credential name** (not the value) — resolved via `Ens.Config.Credentials` |
 | `apiBase` | required for `ollama`; not used by SaaS providers | Base URL of a local Ollama instance, e.g. `http://ollama:11434` |
 | `topN` / `topK` | no (defaults to candidate count) | Max results to return. Field name mirrors the provider's payload — Cohere/Jina/Ollama use `topN`; Voyage uses `topK` |
-| `sslConfig` | no | Name of a `%SSL.Config` for TLS |
+| `sslConfig` | **required for every HTTPS provider** (Cohere, Voyage, Jina); not used by Ollama | Name of a `Security.SSLConfigs` entry (create in `%SYS`: `Do ##class(Security.SSLConfigs).Create("OmniHTTPS")`). Must appear inside the `rerank` sub-block; the embedding provider needs its own top-level `sslConfig` too |
 | `httpTimeout` | no (default `30`s) | HTTP timeout in seconds |
 | `retry.maxAttempts` | no (default `3`) | Max attempts including the first |
 | `retry.baseDelayMs` | no (default `500`) | Base backoff delay |
@@ -256,21 +257,21 @@ Then reference it as `"apiKey": "cohere-prod"` in your `rerank` sub-block. Excep
 
 An end-to-end walkthrough — table → vector top-K → rerank → reordered rows — lives under `src/dc/sample/omniReRank/demo/` (kept out of the IPM install: `dc.sample.*` classes exist in the repo for reference but never ship into `dc.omniReRank.PKG`). It uses IRIS 2026's native `%Embedding.Interface` (no `dc.omniEmbedding` dependency, no fixture vectors).
 
-1. **Prerequisites.** `docker-compose up -d` is running; IPM has loaded `dc-omniReRank` into `IRISAPP`.
+1. **Prerequisites.** `docker-compose up -d` is running; IPM has loaded `dc-omniReRank` into `IRISAPP`; two credentials exist in `Ens.Config.Credentials` — one holding the raw OpenAI key (name `openai-demo`), one holding the raw Cohere key (name `cohere-demo`); one `Security.SSLConfigs` entry called `OmniHTTPS` exists in `%SYS` (see step 4 of Installation).
 
-2. **Create two `%Embedding.Config` rows** — one for embeddings, one for rerank. Any shipped IRIS embedding provider works for the first; any `dc.omniReRank` provider works for the second:
+2. **Create two `%Embedding.Config` rows** — one for embeddings, one for rerank. `sslConfig` is required in both, and OpenAI expects the raw key value in the top-level `apiKey` (that provider does not resolve credential names — IRIS 2026 native contract). The rerank sub-block's `apiKey` IS a credential name (resolved via `Ens.Config.Credentials` by `dc.omniReRank`):
 
    ```objectscript
    Set emb = ##class(%Embedding.Config).%New()
    Set emb.Name = "CatalogEmbeddingV1", emb.EmbeddingClass = "%Embedding.OpenAI"
-   Set emb.VectorLength = 1536, emb.VectorDataType = "FLOAT"
-   Set emb.Configuration = "{""apiKey"":""openai-prod"",""modelName"":""text-embedding-3-small""}"
+   Set emb.VectorLength = 1536
+   Set emb.Configuration = "{""apiKey"":""sk-...PASTE-RAW-OPENAI-KEY..."",""modelName"":""text-embedding-3-small"",""sslConfig"":""OmniHTTPS""}"
    Do emb.%Save()
 
    Set rr = ##class(%Embedding.Config).%New()
    Set rr.Name = "CatalogRerankV1", rr.EmbeddingClass = "%Embedding.OpenAI"
-   Set rr.VectorLength = 1536, rr.VectorDataType = "FLOAT"
-   Set rr.Configuration = "{""apiKey"":""unused"",""modelName"":""placeholder"",""rerank"":{""provider"":""cohere"",""modelName"":""rerank-v3.5"",""apiKey"":""cohere-prod""}}"
+   Set rr.VectorLength = 1536
+   Set rr.Configuration = "{""apiKey"":""sk-...PASTE-RAW-OPENAI-KEY..."",""modelName"":""text-embedding-3-small"",""sslConfig"":""OmniHTTPS"",""rerank"":{""provider"":""cohere"",""modelName"":""rerank-v3.5"",""apiKey"":""cohere-demo"",""sslConfig"":""OmniHTTPS""}}"
    Do rr.%Save()
    ```
 
@@ -280,10 +281,10 @@ An end-to-end walkthrough — table → vector top-K → rerank → reordered ro
    docker-compose exec iris iris session iris -U IRISAPP -B "do ##class(dc.sample.omniReRank.demo.Seed).Run()"
    ```
 
-4. **Search**:
+4. **Search** (via ObjectScript — the primary consumption path; see step 6 of Installation for the SQL-surface caveat):
 
-   ```sql
-   CALL dc_sample_omniReRank_demo.Search_Search('how do I compile classes in ObjectScript?', 5)
+   ```objectscript
+   Do ##class(dc.sample.omniReRank.demo.Search).Search("how do I compile classes in ObjectScript?", 5).%Display()
    ```
 
    The five returned rows are sorted by `RerankScore DESC`; ObjectScript-topic rows outrank the others.
